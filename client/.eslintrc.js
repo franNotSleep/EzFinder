@@ -31,6 +31,8 @@ module.exports = {
         caughtErrorsIgnorePattern: '^_',
       },
     ],
+
+    'no-console': 'off',
     '@typescript-eslint/no-empty-interface': [
       'error',
       {

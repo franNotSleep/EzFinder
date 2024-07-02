@@ -1,5 +1,7 @@
 'use client';
 
+import axios from 'axios';
+
 import type { User } from '@/types/user';
 
 function generateToken(): string {
@@ -36,15 +38,34 @@ export interface ResetPasswordParams {
   email: string;
 }
 
+export interface SignUpResponse {
+  message: string;
+  user: {
+    id: number;
+    token: string;
+  };
+}
+
 class AuthClient {
-  async signUp(_: SignUpParams): Promise<{ error?: string }> {
+  async signUp(params: SignUpParams): Promise<{ error?: string }> {
     // Make API request
 
-    // We do not handle the API, so we'll just generate a token and store it in localStorage.
-    const token = generateToken();
-    localStorage.setItem('custom-auth-token', token);
+    try {
+      const { email, password, lastName, firstName } = params;
 
-    return {};
+      const response = await axios.post<SignUpResponse>('http://localhost:3000/user/register', {
+        email,
+        password,
+        lastName,
+        firstName,
+      });
+
+      localStorage.setItem('custom-auth-token', response.data.user.token);
+
+      return {};
+    } catch (err) {
+      return { error: 'Email already exists' };
+    }
   }
 
   async signInWithOAuth(_: SignInWithOAuthParams): Promise<{ error?: string }> {
@@ -54,11 +75,10 @@ class AuthClient {
   async signInWithPassword(params: SignInWithPasswordParams): Promise<{ error?: string }> {
     const { email, password } = params;
 
-    // Make API request
+    const response = await axios.post('http://localhost:3000/user/login', { email, password });
 
-    // We do not handle the API, so we'll check if the credentials match with the hardcoded ones.
-    if (email !== 'sofia@devias.io' || password !== 'Secret1') {
-      return { error: 'Invalid credentials' };
+    if (response.status === 400) {
+      return { error: 'Invalid email or password' };
     }
 
     const token = generateToken();
